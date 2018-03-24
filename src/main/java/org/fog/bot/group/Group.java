@@ -1,5 +1,7 @@
 package org.fog.bot.group;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +14,14 @@ import java.util.List;
 @Data
 @Slf4j
 public class Group {
-    @XmlElement(name = "groupName")
+    @JsonProperty("groupName")
     private String name;
-    @XmlElement(name = "groupMembers")
+    @JsonProperty("groupMembers")
     private List<String> members;
+    @JsonProperty("py/object")
+    private String pythonClass;
+
+    public Group(){}
 
     public Group(String name){
         this.name = name;
@@ -44,6 +50,12 @@ public class Group {
         } catch (IOException e) {
             log.error("Failed to write group file for {}", g.getName());
             throw e;
+        }
+    }
+
+    public static void deleteGroupFile(String gName) throws IOException {
+        if(!new File(gName+".grp").delete()){
+            throw new IOException("Failed to delete file");
         }
     }
 
