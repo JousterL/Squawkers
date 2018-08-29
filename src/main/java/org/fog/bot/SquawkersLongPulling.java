@@ -94,6 +94,27 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                         "/delete\n";
                 sendMessage(commandList,chatId);
                 return;
+            } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/mygroups")){
+                log.info("Got mygroups command.");
+                StringBuilder sb = new StringBuilder("Your Groups:\n");
+                boolean inGroup=false;
+                if(this.groupMap == null) {
+                    log.error("No groups.");
+                    this.sendMessage("No groups found.", chatId);
+                    return;
+                }
+                for(Group g : this.groupMap.values()){
+                    if(g.getMembers().contains(usr.getUserName())){
+                        sb.append(g.getName()+"\n");
+                        inGroup=true;
+                    }
+                }
+                if(inGroup){
+                    this.sendMessage(sb.toString(), chatId);
+                } else {
+                    this.sendMessage("I'm sorry to report that you are not apart of any groups.", chatId);
+                }
+                return;
             } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/exit")){
                 if(validateAdmin(usr.getId())) {
                     sendMessage("Shutting dow......", chatId);
