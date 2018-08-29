@@ -84,14 +84,27 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                 this.sendMessage(groupList.toString(), chatId);
                 return;
             } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/help")){
-                                String commandList = "List of all possible commands.\n" +
-                        "/list\n" +
-                        "/help\n" +
-                        "/join\n" +
-                        "/notify\n" +
-                        "/create\n" +
-                        "/remove\n" +
-                        "/delete\n";
+                if(validateAdmin(usr.getId()) { //Provide full list of commands for admins
+			String commandList = "List of all possible commands.\n" +
+        	                "/list\n" +
+                	        "/help\n" +
+                        	"/join\n" +
+                	        "/notify\n" +
+                        	"/create\n" +
+ 	                        "/remove\n" +
+				"/mygroups\n" +
+        	                "/delete\n" +
+				"/exit\n";
+		} else { //Provide normal permission list
+			String commandList = "List of all possible commands.\n" +
+				"/list\n" +
+				"/help\n" +
+				"/join\n" +
+				"/notify\n" +
+				"/create\n" +
+				"/remove\n" +
+				"/mygroups\n";
+		}
                 sendMessage(commandList,chatId);
                 return;
             } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/mygroups")){
