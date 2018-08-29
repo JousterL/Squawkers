@@ -1,12 +1,10 @@
 package org.fog.bot.group;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.xml.bind.annotation.XmlElement;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -14,6 +12,7 @@ import java.util.List;
 @Data
 @Slf4j
 public class Group {
+
     @JsonProperty("groupName")
     private String name;
     @JsonProperty("groupMembers")

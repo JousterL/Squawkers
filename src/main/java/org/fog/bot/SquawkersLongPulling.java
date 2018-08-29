@@ -19,6 +19,7 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,17 +67,23 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
 
     @Override
     public void onUpdateReceived(Update update) {
-        log.debug("Got an update {}", update);
+        log.info("Got an update {}", update);
         Long chatId = update.getMessage().getChatId();
         User usr = update.getMessage().getFrom();
         if(update.hasMessage()){
+            log.info("Time of message {}",update.getMessage().getDate());
             if(!validateGroup(chatId)){
                 log.info("Unauthorized Chat. {}",update.getMessage().getChatId());
                 return;
             }
-            if(StringUtils.startsWithIgnoreCase("/list",update.getMessage().getText())){
+            if(StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/list")){
+                StringBuilder groupList = new StringBuilder("Groups\n");
+                this.groupMap.keySet().forEach((key) -> {
+                    groupList.append(key).append("\n");
+                });
+                this.sendMessage(groupList.toString(), chatId);
                 return;
-            } else if (StringUtils.startsWithIgnoreCase("/help",update.getMessage().getText())){
+            } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/help")){
                                 String commandList = "List of all possible commands.\n" +
                         "/list\n" +
                         "/help\n" +
@@ -87,18 +94,21 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                         "/delete\n";
                 sendMessage(commandList,chatId);
                 return;
-            } else if (StringUtils.startsWithIgnoreCase("/exit",update.getMessage().getText())){
+            } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/exit")){
                 if(validateAdmin(usr.getId())) {
-                    sendMessage("Shutting Down-not", chatId);
+                    sendMessage("Shutting dow......", chatId);
                 } else {
                     sendMessage("I can't let you do that "+usr.getUserName(), chatId);
                 }
                 return;
             }
+
+            log.debug("{} starts with help {}",update.getMessage().getText(),StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/help"));
             String[] messageArray = StringUtils.split(update.getMessage().getText()," ");
             String command = StringUtils.remove(StringUtils.lowerCase(messageArray[0]),"/");
 
             if(messageArray.length<=1){
+                log.info("Message array length less then or equal 1, {}",messageArray.length);
                 return;
             }
 
@@ -115,7 +125,18 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                         sendMessage("Unable to find group: "+group, chatId);
                         break;
                     }
-                    groupMap.get(group).getMembers().add(usr.getUserName());
+                    if(groupMap.get(group).getMembers() != null && groupMap.get(group).getMembers().contains(usr.getUserName())){
+                        this.sendMessage("Already a member of this group", chatId);
+                        break;
+                    }
+                    if(groupMap.get(group).getMembers() == null){
+                        ArrayList<String> mem = new ArrayList<>();
+                        mem.add(usr.getUserName());
+                        groupMap.get(group).setMembers(mem);
+                    } else {
+                        groupMap.get(group).getMembers().add(usr.getUserName());
+                    }
+
                     try {
                         Group.saveGroupFile(groupMap.get(group));
                     } catch (IOException e) {
@@ -130,18 +151,37 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                         sendMessage("Unable to find group: "+group, chatId);
                         break;
                     }
-                    if(groupMap.get(group).getMembers().isEmpty()){
+                    if(groupMap.get(group).getMembers() == null || groupMap.get(group).getMembers().isEmpty()){
                         sendMessage("Group is empty :<", chatId);
                         break;
                     }
                     StringBuilder notList = new StringBuilder();
-                    groupMap.get(group).getMembers().forEach(mem -> notList.append("@").append(mem).append(" "));
-                    sendMessage(notList.toString(), chatId);
+                    int cnt  = 0;
+
+                    for(String member:groupMap.get(group).getMembers()){
+                        notList.append("@").append(member).append(" ");
+                        ++cnt;
+                        if (cnt == 5) {
+                            this.sendMessage(notList.toString(), chatId);
+                            notList = new StringBuilder();
+                            cnt = 0;
+                        }
+                    }
+                    if (notList.length() != 0) {
+                        this.sendMessage(notList.toString(), chatId);
+                    }
                     break;
                 case "create":
                     log.info("Got the create command.");
+                    if(groupMap.containsKey(group)){
+                        sendMessage("Group already exists: "+group, chatId);
+                        break;
+                    }
                     try {
-                        Group.saveGroupFile(new Group(group,null));
+                        Group newgroup= new Group(group,null);
+                        Group.saveGroupFile(newgroup);
+                        this.groupMap.put(group,newgroup);
+                        this.sendMessage("Created " + group, chatId);
                     } catch (IOException e) {
                         log.error("Failed to save group.");
                         sendMessage("Failed to create group",chatId);
@@ -151,6 +191,10 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                     log.info("Got the remove command.");
                     if(!groupMap.containsKey(group)){
                         sendMessage("Unable to find group: "+group, chatId);
+                        break;
+                    }
+                    if(!groupMap.get(group).getMembers().contains(usr.getUserName())){
+                        this.sendMessage("You are already not a member of this group.", chatId);
                         break;
                     }
                     groupMap.get(group).getMembers().remove(usr.getUserName());
@@ -212,6 +256,7 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
     }
 
     private void sendMessage(String message, Long chatId){
+        log.debug("Sending message to {}",chatId);
         SendMessage response = new SendMessage();
         response.setChatId(chatId);
         response.setText(message);
