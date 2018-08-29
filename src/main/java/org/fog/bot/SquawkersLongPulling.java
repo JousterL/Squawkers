@@ -84,8 +84,9 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
                 this.sendMessage(groupList.toString(), chatId);
                 return;
             } else if (StringUtils.startsWithIgnoreCase(update.getMessage().getText(),"/help")){
-                if(validateAdmin(usr.getId()) { //Provide full list of commands for admins
-			String commandList = "List of all possible commands.\n" +
+                String commandList;
+		if(validateAdmin(usr.getId())) { //Provide full list of commands for admins
+			commandList = "List of all possible commands.\n" +
         	                "/list\n" +
                 	        "/help\n" +
                         	"/join\n" +
@@ -96,7 +97,7 @@ public class SquawkersLongPulling extends TelegramLongPollingBot implements Appl
         	                "/delete\n" +
 				"/exit\n";
 		} else { //Provide normal permission list
-			String commandList = "List of all possible commands.\n" +
+			commandList = "List of all possible commands.\n" +
 				"/list\n" +
 				"/help\n" +
 				"/join\n" +
